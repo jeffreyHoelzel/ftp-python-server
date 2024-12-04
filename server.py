@@ -75,16 +75,18 @@ def ftp_room_prompt(ftp_rooms, client):
         if room.name == cleaned_choice:
             return cleaned_choice, username
         
-    # if each option fails, notify caller and return empty string
-    print(f"{username} failed to specify either a new room to create or an existing one.")
-    return "error", "error"
+    # if each option fails, notify caller terminate the program
+    print(f"{username} failed to specify either a new room to create or an existing one. Termining {username}'s connection.")
+    # handle removal of clients and terminating their connection from this server later
 
-
-
-
-
+# remove excess characters used to specify file room chatting prompt in terminal
 def clean_message(message):
-    pass
+    idx = message.find(">")
+    if idx != -1:
+        clean_message = message[idx + 3:]
+        return clean_message
+    print(f"Failed to clean message entered. Returning {message}.")
+    return message
 
 if __name__ == '__main__':
     print(f"FTP server booting up...\n\nTo get started, connect a client.\n")
