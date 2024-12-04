@@ -4,8 +4,9 @@
 # Jeffrey Hoelzel Jr
 ################################################################################################################
 
-import socket
+import socket as s
 import sys
+import threading as t
 import time
 import os
 
@@ -14,6 +15,9 @@ NUM_CONNECTIONS = 10
 HOST_IP = '127.0.0.1' # localhost
 PORT = 8080 # random port
 BUFFER_SIZE = 2048
+
+# global variable to handle server running
+running = True
 
 class FTPRoom:
     def __init__(self, room_name):
@@ -101,10 +105,10 @@ def handle_clients(ftp_room, client, username):
                 # remove client and notify server/room
                 ftp_room.remove_clients(client, username)
                 print(f"{username} has left {ftp_room}.")
-                ftp_room.send_message(f"{username} has left the chat.".encode("utf-8"))
+                ftp_room.send_message(f"{username} has left the exchange room.".encode("utf-8"))
                 break
             else:
-                ftp_room.send_message(message.encode("utf-8"))
+                ftp_room.send_message(message.encode("utf-8")) # relays filepath to other clients
         except:
             # remove client on error
             print("Error receiving client message. Removing client.")
@@ -115,8 +119,8 @@ if __name__ == '__main__':
     print(f"FTP server booting up...\n\nTo get started, connect a client.\n")
 
     # initialize socket
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # TCP socket
-    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server = s.socket(s.AF_INET, s.SOCK_STREAM) # TCP socket
+    server.setsockopt(s.SOL_SOCKET, s.SO_REUSEADDR, 1)
 
     server.bind((HOST_IP, PORT))
     print(f"{HOST_IP} bound to port {PORT}.")
@@ -127,7 +131,78 @@ if __name__ == '__main__':
     # file exchange rooms
     exchange_rooms = []
 
-    while True:
-        # display who just connected
-        connection, address = server.accept()
-        print(f"Connected from {str(address)}.")
+    # keep track of active threads
+    active_threads = []
+
+    try:
+        while running:
+            try:
+                # set timeout to check for running flag
+                server.settimeout(1.0)
+
+                try:
+                    # display who just connected
+                    client, address = server.accept()
+                    print(f"Connected from {str(address)}.")
+
+                    # get roomn name and username
+                    room_name, username = ftp_room_prompt(exchange_rooms, client)
+
+                    need_new_room = True
+
+                    for room in exchange_rooms:
+                        if room.name == room_name:
+                            # get room in scope of main
+                            ftp_room = room
+                            ftp_room.add_clients(client, username)
+
+                            # no need for new room since client just got added to existing room
+                            need_new_room = False
+
+                            print(f"{username} has joined {ftp_room}.")
+                            ftp_room.send_message(f"{username} has joined the exchange room!".encode("utf-8"))
+                            break
+
+                    if need_new_room:
+                        # create a new ftp room and add client
+                        ftp_room = FTPRoom(room_name)
+                        ftp_room.add_clients(client, username)
+                        # add to list of known rooms
+                        exchange_rooms.append(ftp_room)
+                        
+                        print(f"{username} has created a new exchange room.")
+                        ftp_room.send_message(f"{username} has created an exchange room!".encode("utf-8"))
+
+                    # create thread for current client
+                    thread = t.Thread(target=handle_clients, args=(ftp_room, client, username,))
+                    thread.start()
+
+                    # add new thread to list of active threads
+                    active_threads.append(thread)
+                except s.timeout:
+                    # skip iteration to check for timeout
+                    print("...")
+                    continue
+            except Exception as e:
+                if running:
+                    print(f"Error occured while handling clients: {e}")
+
+    except KeyboardInterrupt:
+        # catch ctrl+c
+        print("Server shutdown initiated.")
+        running = False
+    finally:
+        # close server socket
+        server.close()
+
+        # remove all clients from each room
+        for room in exchange_rooms:
+            for client, username in room:
+                room.remove_clients(client, username)
+
+        # join all threads in list
+        for thread in active_threads:
+            thread.join(timeout=2) # add 2 second timeout to ensure smooth exit
+
+        print("Server has been shutdown.")
+        sys.exit(0)
