@@ -76,8 +76,10 @@ def ftp_room_prompt(ftp_rooms, client):
             return cleaned_choice, username
         
     # if each option fails, notify caller terminate the program
-    print(f"{username} failed to specify either a new room to create or an existing one. Termining {username}'s connection.")
-    # handle removal of clients and terminating their connection from this server later
+    print(f"{username} failed to specify either a new room to create or an existing one. Terminating connection.")
+    client.close()
+    sys.exit()
+    
 
 # remove excess characters used to specify file room chatting prompt in terminal
 def clean_message(message):
@@ -87,6 +89,27 @@ def clean_message(message):
         return clean_message
     print(f"Failed to clean message entered. Returning {message}.")
     return message
+
+# handle file exchange between clients in ftp rooms
+def handle_clients(ftp_room, client, username):
+    while True:
+        try:
+            message = client.recv(BUFFER_SIZE).decode("utf-8")
+            
+            # check if client wants to leave the room
+            if "CLOSE" in message:
+                # remove client and notify server/room
+                ftp_room.remove_clients(client, username)
+                print(f"{username} has left {ftp_room}.")
+                ftp_room.send_message(f"{username} has left the chat.".encode("utf-8"))
+                break
+            else:
+                ftp_room.send_message(message.encode("utf-8"))
+        except:
+            # remove client on error
+            print("Error receiving client message. Removing client.")
+            ftp_room.remove_clients(client, username)
+            break
 
 if __name__ == '__main__':
     print(f"FTP server booting up...\n\nTo get started, connect a client.\n")
