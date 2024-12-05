@@ -12,7 +12,7 @@ import os
 
 # constants
 NUM_CONNECTIONS = 10
-HOST_IP = '127.0.0.1' # localhost
+HOST_IP = "127.0.0.1" # localhost
 PORT = 8080 # random port
 BUFFER_SIZE = 2048
 
@@ -115,7 +115,7 @@ def handle_clients(ftp_room, client, username):
             ftp_room.remove_clients(client, username)
             break
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print(f"FTP server booting up...\n\nTo get started, connect a client.\n")
 
     # initialize socket
@@ -138,7 +138,7 @@ if __name__ == '__main__':
         while running:
             try:
                 # set timeout to check for running flag
-                server.settimeout(1.0)
+                server.settimeout(1.0) # one second to allow for quick shutdown
 
                 try:
                     # display who just connected
@@ -180,12 +180,11 @@ if __name__ == '__main__':
                     # add new thread to list of active threads
                     active_threads.append(thread)
                 except s.timeout:
-                    # skip iteration to check for timeout
-                    print("...")
-                    continue
+                    # ignore timeout, gives server opportunity to check for ctrl+c
+                    pass
             except Exception as e:
                 if running:
-                    print(f"Error occured while handling clients: {e}")
+                    print(f"Error occured while handling clients: {e}.")
 
     except KeyboardInterrupt:
         # catch ctrl+c
