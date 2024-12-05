@@ -38,8 +38,10 @@ def send_message():
         # check if pattern matches a file path
         if re.match(FILE_PATH_PATTERN, message):
             send_file(f"{username} >> {message}".encode("utf-8"))
-        else:
-            client.send(f"{username} >> {message}".encode("utf-8"))
+        client.send(f"{username} >> {message}".encode("utf-8"))
+
+        if message == "CLOSE":
+            sys.exit(0)
 
 def get_file(file_path):
     pass

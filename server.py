@@ -95,7 +95,6 @@ def clean_message(message):
     if idx != -1:
         clean_message = message[idx + 3:]
         return clean_message
-    print(f"Failed to clean message entered. Returning {message}.")
     return message
 
 # handle file exchange between clients in ftp rooms
