@@ -20,7 +20,7 @@ def get_message():
                 client.send(f"{username}'s exchange room".encode("utf-8"))
             elif message == "CLOSE":
                 client.close()
-                print("You have lef the exhange room. Ending program.")
+                print("You have left the exhange room. Ending program.")
                 sys.exit(0)
             elif re.match(FILE_PATH_PATTERN, message):
                 get_file(message)
@@ -52,7 +52,7 @@ if __name__ == "__main__":
 
     # set up client socket
     client = s.socket(s.AF_INET, s.SOCK_STREAM)
-    client.setsockopt(s.SOL_SOCKET, s.SO_REUSEADDR)
+    client.setsockopt(s.SOL_SOCKET, s.SO_REUSEADDR, 1)
 
     # connect client to server
     client.connect((SERVER_IP, PORT))

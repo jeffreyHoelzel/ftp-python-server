@@ -25,8 +25,13 @@ class FTPRoom:
         self.clients = []
         self.usernames = []
 
+    # handle how the class should be displayed when printing
     def __str__(self):
         return self.name
+    
+    # handle how the class should be iterated over
+    def __iter__(self):
+        return iter(zip(self.clients, self.usernames))
     
     def add_clients(self, client, username):
         self.clients.append(client)
@@ -40,10 +45,10 @@ class FTPRoom:
         client.send("CLOSE".encode("utf-8"))
         client.close()
 
-    def send_file(self, file):
-        # send file to all clients in exchange room
+    def send_message(self, message):
+        # send message to all clients in exchange room
         for client in self.clients:
-            client.send(file) # file includes the entire path to file in host os
+            client.send(message) # file includes the entire path to file in host os
 
 # prompts a user to join an existing, or set up a new FTP room
 def ftp_room_prompt(ftp_rooms, client):
@@ -52,7 +57,7 @@ def ftp_room_prompt(ftp_rooms, client):
     username = client.recv(BUFFER_SIZE).decode("utf-8")
 
     # send prompt message to user about setting up a new room or joining an existing one
-    client.send(f"Welcome to the FTP server!\nYou can either join an existing FTP room or create a new one.\nEnter the name of the FTP room you wish to join or enter 'NEW' to create a new FTP room.\n(If none are listed, create one).\n\nSend any files you want! To quit, enter 'CLOSE'".encode("utf-8"))
+    client.send(f"Welcome to the FTP server!\nYou can either join an existing FTP room or create a new one.\nEnter the name of the FTP room you wish to join or enter 'NEW' to create a new FTP room.\n(If none are listed, create one).\n\nSend any files you want! To quit, enter 'CLOSE'.\n".encode("utf-8"))
 
     # display rooms if available
     if len(ftp_rooms) != 0:
@@ -83,7 +88,6 @@ def ftp_room_prompt(ftp_rooms, client):
     print(f"{username} failed to specify either a new room to create or an existing one. Terminating connection.")
     client.close()
     sys.exit()
-    
 
 # remove excess characters used to specify file room chatting prompt in terminal
 def clean_message(message):
