@@ -1,6 +1,11 @@
+################################################################################################################
+# ***IMPORTANT DISCLAIMER***
+# Some of the code used in this assignment was borrowed and/or modified from my Homework 2 assignment for CS460. 
+# Jeffrey Hoelzel Jr
+################################################################################################################
+
 import socket as s
 import threading as t
-from threading import Lock
 import regex as re
 import os
 import sys
@@ -11,10 +16,6 @@ PORT = 8080
 BUFFER_SIZE = 4096
 # regex pattern for matching filepaths
 FILE_PATH_PATTERN = r'^(.+/)*[^/]+\.[a-zA-Z0-9]+$'
-# FILENAME_FILE_SIZE_PATTERN = r'^([^\s/:<>*?"|]+(?:\.[^\s/:<>*?"|]+)+):(\d+)$'
-
-# lock thread for getting messages
-lock = Lock()
 
 # remove excess characters used to specify file
 def clean_file(file_info):
@@ -25,31 +26,29 @@ def clean_file(file_info):
 def get_message():
     while True:
         try:
-            with lock:
-                message = client.recv(BUFFER_SIZE).decode("utf-8")
-                if message == "USERNAME":
-                    client.send(username.encode("utf-8"))
-                elif message == "NEW":
-                    client.send(f"{username}'s exchange room".encode("utf-8"))
-                elif message == "CLOSE":
-                    client.close()
-                    print("You have left the exhange room. Ending program.")
-                    sys.exit(0)
-                elif message.startswith("FILE:"):
-                    # remove FILE: from message
-                    file_info = message[5:]
-                    # replace \ with / for windows users
-                    file_info = file_info.replace("\\", "/")
-                    # parse out username
-                    sender, file_info = clean_file(file_info)
-
-                    # check that username did not send this file
-                    if sender == username:
-                        return # prevent sender from reading their own file
-
-                    get_file(file_info)
-                else:
-                    print(message)
+            message = client.recv(BUFFER_SIZE).decode("utf-8")
+            if message == "USERNAME":
+                client.send(username.encode("utf-8"))
+            elif message == "NEW":
+                client.send(f"{username}'s exchange room".encode("utf-8"))
+            elif message == "CLOSE":
+                client.close()
+                print("You have left the exhange room. Ending program.")
+                sys.exit(0)
+            # handle file exchange
+            elif message.startswith("FILE:"):
+                # remove FILE: from message
+                file_info = message[5:]
+                # replace \ with / for windows users
+                file_info = file_info.replace("\\", "/")
+                # parse out username
+                sender, file_info = clean_file(file_info)
+                # check that username did not send this file
+                if sender == username:
+                    continue # prevent sender from reading their own file
+                get_file(file_info)
+            else:
+                print(message)
         except Exception as e:
             print(f"Error occured in get_message: {e}.")
             client.close()
@@ -73,7 +72,7 @@ def get_file(file_info):
     filename, file_size_str = file_info.split(":")
     file_size = int(file_size_str)
 
-    print(f"Receiving file '{filename}' ({file_size}) bytes).")
+    print(f"Receiving file '{filename}' ({file_size} bytes).")
 
     # get path to save file
     full_path = os.path.join(".", os.path.basename(filename)) # saving to current directory

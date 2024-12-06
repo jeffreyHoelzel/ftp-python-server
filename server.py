@@ -1,14 +1,12 @@
 ################################################################################################################
 # ***IMPORTANT DISCLAIMER***
-# Much of the code used in this assignment was borrowed and/or modified from my Homework 2 assignment for CS460. 
+# Some of the code used in this assignment was borrowed and/or modified from my Homework 2 assignment for CS460. 
 # Jeffrey Hoelzel Jr
 ################################################################################################################
 
 import socket as s
 import sys
 import threading as t
-import time
-import os
 
 # constants
 NUM_CONNECTIONS = 10
